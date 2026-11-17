@@ -246,7 +246,6 @@ def footer(services):
         </ul>
       </div>
     </div>
-    <div class="footer__big" aria-hidden="true">WEATHER TIGHT</div>
   </div>
   <div class="container footer__bottom">
     <span>&copy; 2023 to <span data-year></span> Weather Tight Solutions NZ Ltd. All rights reserved.</span>

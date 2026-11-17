@@ -1,6 +1,6 @@
 """Static site builder. Global header/footer/contact live in partials/layout.py.
 Run: python3 build.py   (writes the .html pages into the repo root)"""
-import os, sys
+import os, re, sys
 ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(ROOT, "partials"))
 from icons import *
@@ -10,8 +10,39 @@ from content import SERVICES, PEER, QUALS, WHY, REVIEWS, STEPS, FAQ
 S = SERVICES
 
 
+SMALL = {"a", "an", "and", "as", "at", "but", "by", "for", "in", "of", "on", "or", "the", "to", "with", "is"}
+
+
+def title_case(text, first=True):
+    out = []
+    for w in re.split(r"(\s+)", text):
+        if not w.strip():
+            out.append(w); continue
+        low = w.lower()
+        if not first and low in SMALL:
+            out.append(low)
+        elif w.isupper() and len(w) > 1:
+            out.append(w)  # acronyms: CCC, COA, NZ
+        else:
+            out.append(w[0].upper() + w[1:])
+        first = False
+    return "".join(out)
+
+
+def cap_headings(html):
+    def fix(m):
+        state = {"first": True}
+        def txt(t):
+            if not t.group(0).strip():
+                return t.group(0)
+            r = title_case(t.group(0), state["first"]); state["first"] = False; return r
+        inner = re.sub(r"(?<=>)[^<]+|^[^<]+", txt, m.group(2))
+        return f"<{m.group(1)}{inner}</{m.group(1)[:2]}>"
+    return re.sub(r"<(h[12][^>]*>)(.*?)</h[12]>", fix, html, flags=re.S)
+
+
 def page(fname, title, desc, active, body):
-    html = head(title, desc) + header(S, active) + body + contact_section(S) + footer(S)
+    html = cap_headings(head(title, desc) + header(S, active) + body + contact_section(S) + footer(S))
     assert "\u2014" not in html, f"em dash found in {fname}"
     with open(os.path.join(ROOT, fname), "w") as f:
         f.write(html)
